@@ -1,0 +1,51 @@
+<!doctype html>
+<head>
+  <style>
+    body {
+      display: layout(masonry);
+      --padding: 10;
+      --columns: 4;
+      background: #000;
+    }
+    div {
+      background-color: hsl(0, 80%, 20%);
+      color: #000;
+      font: 12px sans-serif;
+      /* display: flex;
+      align-items: center;
+      justify-content: center; */
+      padding: 20px;
+    }
+    div:nth-child(odd) {
+      background: #08c4c4;
+    }
+    div:nth-child(even) {
+      background: #ff0;
+    }
+    div::first-letter {
+      color: red;
+      font-size: 200%;
+    }
+  </style>
+</head>
+
+<body>
+  <div>1 Lorem ipsum dolor sit amet, consul disputando ne his, et vim accumsan ponderum. Rebum deseruisse ex vix. Vix stet honestatis definitionem an, et natum ocurreret cum, semper interpretaris cu mea. Eam saperet fierent luptatum no. Ius ei dicunt detracto elaboraret. Lorem ipsum dolor sit amet, consul disputando ne his, et vim accumsan ponderum. Rebum deseruisse ex vix. Vix stet honestatis definitionem an, et natum ocurreret cum, semper interpretaris cu mea. Eam saperet fierent luptatum no. Ius ei dicunt detracto elaboraret.</div>
+  <div>2 Lorem ipsum dolor sit amet, consul disputando ne his, et vim accumsan ponderum. Rebum deseruisse ex vix. Vix stet honestatis definitionem an, et natum ocurreret cum, semper interpretaris cu mea. Eam saperet fierent luptatum no. Ius ei dicunt detracto elaboraret.</div>
+  <div>3 Lorem ipsum dolor sit amet.</div>
+  <div>4 Lorem ipsum dolor sit amet, consul disputando ne his, et vim accumsan ponderum. Rebum deseruisse ex vix. Vix stet honestatis definitionem an, et natum ocurreret cum, semper interpretaris cu mea. Eam saperet fierent luptatum no. Ius ei dicunt detracto elaboraret.</div>
+  <div>5 Lorem ipsum dolor sit amet, consul disputando ne his, et vim accumsan ponderum. Rebum deseruisse ex vix. Vix stet honestatis definitionem an.</div>
+  <div>6 Lorem ipsum dolor sit amet, consul disputando ne his, et vim accumsan ponderum. Rebum deseruisse ex vix. Vix stet honestatis definitionem an, et natum ocurreret cum, semper interpretaris cu mea. Eam saperet fierent luptatum no. Ius ei dicunt detracto elaboraret Lorem ipsum dolor sit amet, consul disputando ne his, et vim accumsan ponderum. Rebum deseruisse ex vix. Vix stet honestatis definitionem an, et natum ocurreret cum, semper interpretaris cu mea.</div>
+  <div>7 Lorem ipsum dolor sit amet, consul disputando ne his, et vim accumsan ponderum. Rebum deseruisse ex vix. Vix stet honestatis definitionem an, et natum ocurreret cum, semper interpretaris cu mea. Eam saperet fierent luptatum no. Ius ei dicunt detracto elaboraret.</div>
+  <div>8 Lorem ipsum dolor sit amet, consul disputando ne his, et vim accumsan ponderum. Rebum deseruisse ex vix.</div>
+  <div>9 Lorem ipsum dolor sit amet, consul disputando ne his, et vim accumsan ponderum. Rebum deseruisse ex vix. Vix stet honestatis definitionem an, et natum ocurreret cum, semper interpretaris cu mea..</div>
+
+  <script>
+    document.querySelectorAll('div').forEach(elem => {
+      const t = elem.textContent;
+      // Cut out a random amount of text, but keep at least 10 characters
+      elem.textContent = t.slice(0, Math.floor(Math.random() * (t.length - 10) + 10));
+    })
+    CSS.layoutWorklet.addModule('masonry.js');
+  </script>
+</body>
