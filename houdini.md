@@ -70,7 +70,7 @@ window.CSS && CSS.number
 - `CSSMathValue` - 包含多个值/单位的值，如数学表达式（例如 "calc(56em + 10%)"）
 
 ```javascript
-// 单位制
+// 单位值
 const {value, unit} = CSS.number('10');
 // value === 10, unit === 'number'
 
