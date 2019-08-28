@@ -6,19 +6,25 @@ __CSS-TAG Houdini Task Force (CSS Houdini)__ 是W3C和各大厂商组成的一�
 
 Houdini让开发者可以直接访问CSS对象模型(CSSOM),开发人员可以编写浏览器理解并可以解析为CSS的代码，（从而创建新的CSS功能，而无需等待它们在浏览器中本机实现。）而不是在Javascript中更新样式。
 
-包括：
-
-- Paint API
-- Typed OM API
-- Properties & Values API
-- Animation API
-- Layout API
-- Parser API
-- Font Metrics API
-
 Much like Service Workers are a low-level JavaScript API for the browser's cache, *Houdini introduces low-level JavaScript APIs for the browser's render engines*
 
-## workLet
+![页面构建](./img/流程.png)
+
+包括：
+
+- **Paint API**: Deals with background-image and background-border as CSS attributes, giving you the ability to draw in a canvas style on these images.
+- **Typed OM API**: We have all had to deal with splitting up strings to remove the ‘px’ so that we can get an integer value of a style. Typed OM takes care of all these values with this object-based API for working with CSS values in JavaScript.
+- **Properties & Values API**: Provides an API for defining CSS properties and giving them a type, behavior and default value. Very useful when paired with other APIs in this collection.
+- **AnimationWorklet**: This will solve the messy solution of watching for events such as scrolling and mouse movement inside the same thread that your UI is running. Enhancing user experience in a nifty API.
+- **Layout API**: My personal favorite. Build your own layouts, reinvent flexbox and grid and implement it all with one CSS style added.
+- **Parser API**: Make your own DOM element types such as `<color>` and have them do whatever you want to their children.
+- **Font Metrics API**: Exposing some font data to you in a digestible form which give you a lot more control over text in your application.
+
+## Is Houdini ready yet?
+
+<https://ishoudinireadyyet.com/>
+
+## Worklet
 
 > The Worklet interface is a lightweight version of Web Workers and gives developers access to low-level parts of the rendering pipeline. With Worklets, you can run JavaScript and WebAssembly code to do graphics rendering or audio processing where high performance is required.
 
@@ -249,19 +255,74 @@ You can also use `+` to allow for a space-separarted list of one or more items o
 
 ## Paint API
 
+The *CSS Painting API Level 1*, also known as the Houdini PAINT API, gives us a new option for places where we would use images in CSS: backgrounds, masks, and the like. With the new `paint()` function, and a PAINT API worklet, we can:
+
+- Use a 2D Canvas-like drawing context to draw
+- Scale our drawn image based on the size of the element (and redraw too)
+- Style our drawing using *Custom Properties*
+
+### 使用
+
+```CSS
+/* CSS */
+.box {
+    width: 180px;
+    height: 180px;
+    background-image: paint(sample-paint);
+}
+```
+
+```javascript
+// js
+if (window.CSS) {
+  CSS.paintWorklet.addModule('paint-worklet.js');
+}
+```
+
+```javascript
+// paint-worklet.js
+
+registerPaint('sample-paint', class {
+  // Custom properties from element's style to look for
+  static get inputProperties() { return ['--foo']; }
+  // Input arguments that can be passed to the `paint` function
+  static get inputArguments() { return ['<color>']; }
+  // Whether Alpha is allowed?
+  static get contextOptions() { return {alpha: true}; }
+
+  paint(ctx, size, props, args) {
+    // ctx - drawing context
+    // size - size of the box being painted
+    // props - inputProperties
+    // args - array of passed-in arguments
+
+    // Paint code goes here.
+  }
+});
+```
+
+### 适用场景
+
+CSS Paint API更适用于动态场景，适合实现需要实时绘制渲染的需求。如果是纯静态展示，直接就用JS加Canvas实现得了，没必要为了技术而技术。
+
 ## Animation API
+
+The Animation Worklet API provides a method to create scripted animations that control a set of animation effects. The API is designed to make it possible for user agents to run such animations in their own dedicated thread to provide a degree of performance isolation from main thread.
+
+Animation Worklet allows you to write imperative animations that run at the device's native frame rate for that extra buttery jank-free smoothness™, make your animations more resilient against main thread jank and are linkable to scroll instead of time.
 
 ## Layout API
 
-## Is Houdini ready yet?
-
-<https://ishoudinireadyyet.com/>
+ The layout worklet is supposed to enable you to do display: layout('myLayout') and run your JavaScript to arrange a node’s children in the node’s box.
 
 ## 总结
 
-- 优点
-
-- 
+- Advantage
+  - Faster parse times for complex styles (since the styling is happening at the CSS step)
+  - Developers no longer need to wait for web browser vendors to add CSS functionality — they can just polyfill it (this would happen when all browsers support Houdini — each Houdini worklet could then work interchangeably between browsers, like CSS plugins)
+  - Polyfills are more performant, so pages will render faster
+  - Better separation of logic and style (style kept in CSS, logic kept in JS)
+  - More customized styles and design systems (since this approach allows us to add in styles that we can’t create with CSS today, as well as allows us to create default values and fallbacks in visual systems)
 
 ## REFERENCE
 
@@ -287,6 +348,18 @@ You can also use `+` to allow for a space-separarted list of one or more items o
 - Custom Properties
   - <https://www.w3cplus.com/css/css-property-and-value-in-css-houdini.html>
   - <https://houdini.glitch.me/custom-properties>
+
+- Paint API
+  - <https://www.zhangxinxu.com/wordpress/2018/11/css-paint-api-canvas/>
+  - <https://houdini.glitch.me/paint>
+
+- Animation APi
+  - <https://developers.google.com/web/updates/2018/10/animation-worklet>
+  - <https://houdini.glitch.me/animation>
+
+- Layout API
+  - <https://houdini.glitch.me/layout>
+  - <https://developers.google.com/web/updates/2016/05/houdini#layout_worklet>
 
 - 例子
   - <https://css-houdini.rocks/>

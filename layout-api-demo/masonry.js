@@ -3,9 +3,9 @@ registerLayout('masonry', class {
     return [ '--padding', '--columns' ];
   }
 
-  *intrinsicSizes() { /* TODO implement :) */ }
+  *intrinsicSizes(children, edges, styleMap) {}
   *layout(children, edges, constraints, styleMap) {
-    const inlineSize = constraints.fixedInlineSize;
+    const inlineSize = constraints.fixedInlineSize; // 父元素的宽
 
     const padding = parseInt(styleMap.get('--padding').toString());
     const columnValue = styleMap.get('--columns').toString();
@@ -17,7 +17,7 @@ registerLayout('masonry', class {
     }
 
     // Layout all children with simply their column size.
-    const childInlineSize = (inlineSize - ((columns + 1) * padding)) / columns;
+    const childInlineSize = (inlineSize - ((columns + 1) * padding)) / columns; // 子元素的宽
     const childFragments = yield children.map((child) => {
       return child.layoutNextFragment({fixedInlineSize: childInlineSize});
     });
@@ -34,8 +34,8 @@ registerLayout('masonry', class {
         return acc;
       }, {val: +Infinity, idx: -1});
 
-      childFragment.inlineOffset = padding + (childInlineSize + padding) * min.idx;
-      childFragment.blockOffset = padding + min.val;
+      childFragment.inlineOffset = padding + (childInlineSize + padding) * min.idx; // 相对于最左边的偏移
+      childFragment.blockOffset = padding + min.val; // 相对于顶部的偏移
 
       columnOffsets[min.idx] = childFragment.blockOffset + childFragment.blockSize;
       autoBlockSize = Math.max(autoBlockSize, columnOffsets[min.idx] + padding);
