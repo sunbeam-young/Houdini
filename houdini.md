@@ -1,6 +1,25 @@
 # CSS HOUDINI
 
-> The objective of the CSS-TAG Houdini Task Force (CSS Houdini) is to jointly develop features that explain the “magic” of Styling and Layout on the web.
+<!-- > The objective of the CSS-TAG Houdini Task Force (CSS Houdini) is to jointly develop features that explain the “magic” of Styling and Layout on the web. -->
+
+# 前言
+
+让我们来看看一个 HTML 文档从被浏览器接收到显示在屏幕上的全过程，下面这张图里被标为蓝色的部分就是 JavaScript 可以染指的环节了：
+
+![原来](./img/原来.png)
+
+我们根本控制不了浏览器解析 HTML 和 CSS 的过程，只能看着它生成 DOM 和 CSS object model (CSSOM)。没法控制级联（cascade）、没法控制浏览器布局元素的方式（layout）、也没法控制元素在屏幕上显示的过程（paint）、最后的合成（composite）也无能为力。
+整个过程中，开发者能完全控制的唯一环节就是 DOM，另外 CSSOM 也可以部分控制到。即使如此，引用 Houdini 官网上的话来说，这种程度的暴露是“不确定的、兼容性不稳定的以及缺乏对关键特性的支持的”。
+
+举个例子，浏览器中的 CSSOM 是不会告诉你它是如何处理跨源的样式表的，而且对于浏览器无法解析的 CSS 语句它的处理方式就是不解析了，也就是说——如果你要用 CSS polyfill 让浏览器去支持它尚且不支持的属性，那就不能在 CSSOM 这个环节做，只能自行解析一遍 DOM 树，找到 `<style>` 和 `<link rel="stylesheet">` 标签，获取其中的 CSS 样式、解析、重写，最后再加回 DOM 树中。
+
+如果你想要浏览器做出它本来做不到事情（比如让它解析你给的样式，不管它能不能实现该样式），而渲染流程里你无法插手其他步骤，所以只能通过手动更新和改变 DOM 的方式。
+
+“干涉”浏览器解析样式的目的:
+- 统一跨浏览器行为
+- 开发新特性或者给新特性打补丁，让人们可以立刻使用到新特性
+
+# CSS Houdini
 
 __CSS-TAG Houdini Task Force (CSS Houdini)__ 是W3C和各大厂商组成的一个工作组，志在建立一系列的API，让开发者能够介入浏览器的CSS引擎操作。
 
@@ -8,6 +27,7 @@ Houdini让开发者可以直接访问CSS对象模型(CSSOM),开发人员可以�
 
 Much like Service Workers are a low-level JavaScript API for the browser's cache, *Houdini introduces low-level JavaScript APIs for the browser's render engines*
 
+下面这张图片展示的是每个环节对应的新标准，开发者可以用这些标准来控制对应的环节。
 ![页面构建](./img/流程.png)
 
 包括：
@@ -16,7 +36,7 @@ Much like Service Workers are a low-level JavaScript API for the browser's cache
 - **Typed OM API**: We have all had to deal with splitting up strings to remove the ‘px’ so that we can get an integer value of a style. Typed OM takes care of all these values with this object-based API for working with CSS values in JavaScript.
 - **Properties & Values API**: Provides an API for defining CSS properties and giving them a type, behavior and default value. Very useful when paired with other APIs in this collection.
 - **AnimationWorklet**: This will solve the messy solution of watching for events such as scrolling and mouse movement inside the same thread that your UI is running. Enhancing user experience in a nifty API.
-- **Layout API**: My personal favorite. Build your own layouts, reinvent flexbox and grid and implement it all with one CSS style added.
+- **Layout API**: Build your own layouts, reinvent flexbox and grid and implement it all with one CSS style added.
 - **Parser API**: Make your own DOM element types such as `<color>` and have them do whatever you want to their children.
 - **Font Metrics API**: Exposing some font data to you in a digestible form which give you a lot more control over text in your application.
 
@@ -27,6 +47,36 @@ Much like Service Workers are a low-level JavaScript API for the browser's cache
 ## Worklet
 
 > The Worklet interface is a lightweight version of Web Workers and gives developers access to low-level parts of the rendering pipeline. With Worklets, you can run JavaScript and WebAssembly code to do graphics rendering or audio processing where high performance is required.
+
+Worklets are JavaScript modules, added by invoking the worklet's addModule function, which is a Promise.
+
+```javascript
+// From inside the browser's context
+await demoWorklet.addModule('path/to/script.js');
+
+// Multiple worklets can be loaded at once, as well
+Promise.all([
+  demoWorklet1.addModule('script1.js'),
+  demoWorklet2.addModule('script2.js'),
+]).then(results => {
+  // Both worklets have loaded, and we can do tasks that rely on them
+});
+```
+
+```javascript
+// The kind of worklet it is
+registerDemoWorklet('name', class { // The name we'll call this worklet
+
+  // Each worklet can define different functions to be used
+  // These will be called by the render engine as needed
+  process(arg) {
+    // Stuff happens in here! What happens depends on the worklet
+    // Sometimes it'll return something
+    // Other times it'll work directly on the arguments
+    return !arg;
+  }
+});
+```
 
 ### Worklet types:
 
@@ -227,11 +277,11 @@ cs.get('width');
 ```javascript
 if ('registerProperty' in CSS ) {
   CSS.registerProperty({
-  name: '--foo', // String, name of the custom property
-  syntax: '<color>', // String, how to parse this property. Defaults to *
-  inherits: false, // Boolean, if true should inherit down the DOM tree
-  initialValue: 'black', // String, initial value of this property
-});
+    name: '--foo', // String, name of the custom property
+    syntax: '<color>', // String, how to parse this property. Defaults to *
+    inherits: false, // Boolean, if true should inherit down the DOM tree
+    initialValue: 'black', // String, initial value of this property
+  });
 }
 ```
 
@@ -287,8 +337,6 @@ registerPaint('sample-paint', class {
   static get inputProperties() { return ['--foo']; }
   // Input arguments that can be passed to the `paint` function
   static get inputArguments() { return ['<color>']; }
-  // Whether Alpha is allowed?
-  static get contextOptions() { return {alpha: true}; }
 
   paint(ctx, size, props, args) {
     // ctx - drawing context
@@ -301,6 +349,9 @@ registerPaint('sample-paint', class {
 });
 ```
 
+### PAINT API Polyfill
+Start using the PAINT API today! Google Chrome Labs maintains a [polyfill](https://github.com/GoogleChromeLabs/css-paint-polyfill) for the PAINT API which makes it available in all browsers that support Canvas!
+
 ### 适用场景
 
 CSS Paint API更适用于动态场景，适合实现需要实时绘制渲染的需求。如果是纯静态展示，直接就用JS加Canvas实现得了，没必要为了技术而技术。
@@ -311,11 +362,73 @@ The Animation Worklet API provides a method to create scripted animations that c
 
 Animation Worklet allows you to write imperative animations that run at the device's native frame rate for that extra buttery jank-free smoothness™, make your animations more resilient against main thread jank and are linkable to scroll instead of time.
 
+Worklet Overview
+```javascript
+registerAnimator('sample-animator', class {
+  constructor(options) {
+    // Called when a new animator is instantiated
+    // Used to set stuff up for each use of an animator
+  }
+  animate(currentTime, effect) {
+    // currentTime - The current time from the defined timeline
+    // effect - Group of effects that this animation is working on
+
+    // Animation frame logic goes here.
+    // Usually something to the effect of setting the time of an effect
+    effect.localTime = currentTime;
+  }
+});
+```
+
+Register and Use Worklet from Main JavaScript
+
+```javascript
+await CSS.animationWorklet.addModule('path/to/animation-worklet.js');
+
+// Element we want to animate
+const elem = document.querySelector('#my-elem');
+// The element we want to watch the scrolling on
+const scrollSource = document.scrollingElement;
+// Number of steps our animation will be broken up in to
+const timeRange = 1000;
+ // A new ScrollTimeline to use! Listen to scroll on the `scrollSource`, divide everything in to `timeRage` pieces, optionally start at `startScrollOffset` and end at `endScrollOffset`
+const scrollTimeline = new ScrollTimeline({
+  scrollSource,
+  timeRange,
+});
+
+const effectKeyframes = new KeyframeEffect(
+  elem,
+  // The Keyframe animation effects we want to apply
+  [
+    {transform: 'scale(1)'},
+    {transform: 'scale(.25)'},
+    {transform: 'scale(1)'}
+  ],
+  {
+    // The duration of the effect. If set to `timeRange` it will be a 1:1 movement with the scroll of the element, 0-`timeRange` will be faster, >`timeRage` will be slower, and 0 will be off
+    duration: timeRange,
+  },
+);
+
+// Create a new WorkletAnimation
+new WorkletAnimation(
+  // Name of the Animation Worklet to use
+  'sample-animator',
+  // Effect(s) to use. Can be an array of KeyframeEffects
+  effectKeyframes,
+  // Timeline to use for the Worklet
+  scrollTimeline,
+  // Options to pass in to Animation Worklet constructor
+  {},
+).play(); // Make It So
+```
+
 ## Layout API
 
  The layout worklet is supposed to enable you to do display: layout('myLayout') and run your JavaScript to arrange a node’s children in the node’s box.
 
-## 总结
+## CONCLUSION
 
 - Advantage
   - Faster parse times for complex styles (since the styling is happening at the CSS step)
